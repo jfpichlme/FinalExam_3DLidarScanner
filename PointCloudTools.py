@@ -327,11 +327,7 @@ class ScanObject:
         vispy.app.run()
 
 
-
-
-
-# Functions that use the Actual 3D Hardware implimentation
-
+# Functions that use the Actual 3D Hardware implementation
 
 #FirstScan = ScanObject("First_Try", 178)
 #FirstScan.lidarSensorRead()
@@ -352,8 +348,7 @@ TryLoadScan.loadLidarScanValues("Leng1.txt")
 TryLoadScan._transformData()
 TryLoadScan.clustering()
 TryLoadScan.plotpointclouddata()
-
-#print(TryLoadScan)
+print(TryLoadScan)
 
 
 # Function that loads stored xyz data
@@ -362,10 +357,7 @@ TryLoadScan.plotpointclouddata()
 #TryLoadScan.loadPointCloudData("Scan1.txt")
 #TryLoadScan.clustering()
 #TryLoadScan.plotpointclouddata()
+print(TryLoadScan)
 
-#ConvertScan = ScanObject("Converter", 178)
-#ConvertScan.loadLidarScanValues("Leng1.txt")
-#ConvertScan._transformData()
-#ConvertScan.saveScan()
 
-# This repository includes a python code for visualizing and analizing Point Cloud Data. The example point cloud data is derived using a tfMini and an arduiono mega. The codes contorlling the hardware are included as well
+
