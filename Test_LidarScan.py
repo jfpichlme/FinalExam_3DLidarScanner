@@ -14,7 +14,8 @@ LiveScan.lidarSensorRead()
 print("-------------------------------------------------------------------------")
 LiveScan._transformData()
 LiveScan.saveScan()
-LiveScan.clustering(8)
+LiveScan.plotpointclouddata()
+LiveScan.clustering(6.6, 5)
 LiveScan.plotpointclouddata()
 
 
