@@ -35,7 +35,6 @@ class ScanObject:
         self.Resolution = Resolution  # Resolution defines the
         self.Length = []  # Vector that stores the Length measurements
 
-
         self.AngleMap = ScanObject.createAngleMap(self) # Containing the angles of the Scan depending on the Resolution
 
         # Processed coordinate data of the scan
@@ -51,6 +50,7 @@ class ScanObject:
             rotated by an angle of -180° (considered as the z plane) performing one measurement at each step.
             Having reached -90 degrees, it s then rotated by one step forward in the xy plane. the last measurement is
             assumed to happen when the sensor was rotated by 180°."""
+
 
         print("Creating Angle Map")
 
@@ -120,9 +120,6 @@ class ScanObject:
         if( len(self.Length) != self.Resolution**2):
             warnings.warn("The number of length values should match the squared Resolution")
 
-
-
-
     def saveScan(self):
         """Method that allows to save the Length data and the coordinates in the Files "Scan1" and "Leng1" """
 
@@ -185,7 +182,7 @@ class ScanObject:
                     print("Following Message received from Sensor: ", mydata.decode("utf-8"))
 
     def _transformData(self):
-        """Function to transform the Length data into xyz coordinates depending on the angle map """
+        """Method to transform the Length data into xyz coordinates depending on the angle map """
         i = 0
         for dist in self.Length:
             self.datax = np.append(self.datax, self.Length[i] * np.cos(self.AngleMap[i][0]*2*np.pi/360)
@@ -195,25 +192,37 @@ class ScanObject:
             self.dataz = np.append(self.dataz, self.Length[i] * np.sin(self.AngleMap[i][1]*2*np.pi/360))
             i += 1
 
-    def mergescanobjects(self):
-        print("To be implimented")
+    def addscanobjects(self, other, deltaX, deltaY, deltaZ):
+         """Method that allows to add the data of one Point Cloud object to another one resulting in a larger Point Cloud.
+             Params:
+                    other: the Point cloud data that needs to be added
+                    deltaX:  the X difference between the two origins of the scans in cm
+                    deltaY:  the Y difference between the two origins of the scans in cm
+                    deltaZ:  the Z difference between the two origins of the scans in cm """
+
+         self.datax = np.append(self.datax, other.datax+deltaX)
+         self.datay = np.append(self.datay, other.datay+deltaY)
+         self.dataz = np.append(self.dataz, other.dataz+deltaZ)
 
     def __str__(self):
         """Print most important information about the Point Cloud Data"""
-        return str("Point Cloud " + self.name + " contains: " + str(len(self.Length)) +
+        return str("Point Cloud " + self.name + " contains: " + str(len(self.datax)) +
                    " Points given by a resolution of " + str(self.Resolution) + ". The object can be separated into "
                    + str(len(set(self.labels)) - (1 if -1 in self.labels else 0)) + " clusters")
 
-    def clustering(self):
-        """Method that allows to create clusters in the Point cloud data based on the DBSCAN Algorithm"""
+    def clustering(self, eps, min_samples):
+        """Method that allows to create clusters in the Point cloud data based on the DBSCAN Algorithm
+             Params:
+                    eps:    Radius which are considered to be added to a cluster
+                    min_samples: Number of points in range eps such that it is considered a cluster """
 
         # Create NpArray containing the point cloud of form (Resolution**2, 3)
         PointCloudData = np.vstack([self.datax, self.datay, self.dataz]).transpose()
 
-        print("Finished normalization starting clustering")
+        print("Starting clustering")
 
-        # Start DBSCAN algorithm with predefined hyper parameters
-        clustering = DBSCAN(eps=7, min_samples= 8, leaf_size= 80).fit(PointCloudData)
+        # Start DBSCAN algorithm with hyper parameters
+        clustering = DBSCAN(eps=eps, min_samples= min_samples, leaf_size= 80).fit(PointCloudData)
 
         print("Finished Clustering")
 
@@ -227,7 +236,7 @@ class ScanObject:
         # Get the number of points which are defined to be noise
         n_noise_ = list(self.labels).count(-1)
 
-        print("We derived a total number of ", n_clusters_, " clusters")
+        print("Derived a total number of ", n_clusters_, " clusters")
         print("Noise level: ", n_noise_/len(self.labels))
 
     def __getcolormap(self, unique_labels):
@@ -278,11 +287,13 @@ class ScanObject:
         # Create a new ViewBox
         view = canvas.central_widget.add_view()
 
+        print("ViewBox created")
+
         # Define settings for view
-        view.camera = 'fly'  # 'Explore mode: 'fly' = flightsimulator, 'turntable' rotating around a fixed point
+        view.camera = 'fly'  # 'Explore mode: 'fly' = flightsimulator, 'turntable' = rotating around a fixed point
         view.camera.fov = 80  # Field of view
-        view.camera.distance = 7  # Initial distance from origin
-        view.camera.scale_factor = 10  # "thruster speed"  for mode fly
+        view.camera.distance = 20 # Initial distance from origin
+        view.camera.scale_factor = 20  # "thruster speed"  for mode fly
 
         colors = np.array([1, 1, 1, 1])  # Creating array containing the colors for the labels in size (4, 1)
 
@@ -301,10 +312,9 @@ class ScanObject:
             for label in self.labels:
                 colors = np.vstack((colors, colormap[label]))  # associate a color to each point using the colormap
 
+            print("Colors associated")
             colors = np.delete(colors, 0, axis=0)  # delete the first dummy entry defining the form of the array
             colors = ColorArray(colors)  # color array creating different color formats such as RGB
-
-
 
         #  Define plot
         p1 = Scatter3D(parent=view.scene)
@@ -325,39 +335,5 @@ class ScanObject:
 
         # Start plotting
         vispy.app.run()
-
-
-# Functions that use the Actual 3D Hardware implementation
-
-#FirstScan = ScanObject("First_Try", 178)
-#FirstScan.lidarSensorRead()
-#FirstScan.fillRandomData()
-#FirstScan._transformData()
-#FirstScan.saveScan()
-#FirstScan.clustering()
-#FirstScan.plotpointclouddata()
-
-
-
-
-
-# Function that loads Length Data
-
-TryLoadScan = ScanObject("FirstLoadTry", 178)
-TryLoadScan.loadLidarScanValues("Leng1.txt")
-TryLoadScan._transformData()
-TryLoadScan.clustering()
-TryLoadScan.plotpointclouddata()
-print(TryLoadScan)
-
-
-# Function that loads stored xyz data
-
-#TryLoadScan = ScanObject("FirstLoadTry", 178)
-#TryLoadScan.loadPointCloudData("Scan1.txt")
-#TryLoadScan.clustering()
-#TryLoadScan.plotpointclouddata()
-print(TryLoadScan)
-
 
 
